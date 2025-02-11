@@ -9,9 +9,9 @@
         // 初期サービスデータ
         Services = new List<Service>
         {
-            new Service { Name = "Web API", IsRunning = true },
-            new Service { Name = "Database", IsRunning = false },
-            new Service { Name = "Cache", IsRunning = true }
+            new Service { Name = "Web API", IP = "192.168.1.10", IsRunning = true },
+            new Service { Name = "Database", IP = "192.168.1.20", IsRunning = false },
+            new Service { Name = "Cache", IP = "192.168.1.30", IsRunning = true }
         };
 
         // タイマーで状態を定期更新
@@ -23,10 +23,19 @@
 
     private void UpdateStatus()
     {
-        // ダミーの状態変化（実際はAPIから取得する）
+        var now = DateTime.Now;
         foreach (var service in Services)
         {
+            bool previousState = service.IsRunning;
             service.IsRunning = new Random().Next(0, 2) == 0;
+
+            if (!service.IsRunning)
+            {
+                if (previousState)
+                {
+                    service.DownSince = now; // ダウンした瞬間の時間を記録
+                }
+            }
         }
         InvokeAsync(StateHasChanged);
     }
@@ -39,7 +48,13 @@
     private class Service
     {
         public string Name { get; set; } = "";
+        public string IP { get; set; } = "";
         public bool IsRunning { get; set; }
+        public DateTime? DownSince { get; set; } // 赤ランプ（ダウン状態）の開始時刻
+
+        public string DownDuration => IsRunning || DownSince == null
+            ? ""
+            : (DateTime.Now - DownSince.Value).ToString(@"hh\:mm\:ss");
     }
 }
 
@@ -62,7 +77,7 @@
         background: rgba(255, 255, 255, 0.1);
         padding: 20px;
         border-radius: 10px;
-        width: 200px;
+        width: 250px;
         text-align: center;
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
         transition: transform 0.3s;
@@ -97,7 +112,12 @@
     {
         <div class="card">
             <h2>@service.Name</h2>
+            <h3>@service.IP</h3> <!-- IP アドレスを表示 -->
             <div class="status @(service.IsRunning ? "online" : "offline")"></div>
+            @if (!service.IsRunning)
+            {
+                <p>Down for: @service.DownDuration</p>
+            }
         </div>
     }
 </div>
