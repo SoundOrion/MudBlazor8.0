@@ -1,0 +1,122 @@
+﻿@page "/monitor"
+
+@code {
+    private List<Service> Services = new();
+    private System.Timers.Timer? Timer;
+
+    protected override void OnInitialized()
+    {
+        // 初期サービスデータ
+        Services = new List<Service>
+        {
+            new Service { Name = "Web API", IsRunning = true },
+            new Service { Name = "Database", IsRunning = false },
+            new Service { Name = "Cache", IsRunning = true }
+        };
+
+        // タイマーで状態を定期更新
+        Timer = new System.Timers.Timer(5000); // 5秒ごと
+        Timer.Elapsed += (sender, e) => UpdateStatus();
+        Timer.AutoReset = true;
+        Timer.Start();
+    }
+
+    private void UpdateStatus()
+    {
+        // ダミーの状態変化（実際はAPIから取得する）
+        foreach (var service in Services)
+        {
+            service.IsRunning = new Random().Next(0, 2) == 0;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Timer?.Dispose();
+    }
+
+    private class Service
+    {
+        public string Name { get; set; } = "";
+        public bool IsRunning { get; set; }
+    }
+}
+
+<style>
+    body {
+        background-color: #f8f9fa;
+        color: #212529;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .dashboard {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+        max-width: 600px;
+        margin: auto;
+    }
+
+    .node-header {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .search-bar {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        width: 100%;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 10px;
+    }
+
+    .status-indicator {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+    }
+
+    .online {
+        background-color: #28a745;
+    }
+
+    .offline {
+        background-color: #dc3545;
+    }
+
+    .service-name {
+        font-weight: bold;
+        margin-left: 10px;
+    }
+</style>
+
+<h1 class="node-header">Nodes 3 total</h1>
+<input class="search-bar" type="text" placeholder="Search...">
+
+<div class="dashboard">
+    @foreach (var service in Services)
+    {
+        <div class="card">
+            <div style="display: flex; align-items: center;">
+                <div class="status-indicator @(service.IsRunning ? "online" : "offline")"></div>
+                <span class="service-name">@service.Name</span>
+            </div>
+            <span class="ip-address">127.0.0.1</span>
+        </div>
+    }
+</div>

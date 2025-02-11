@@ -1,0 +1,103 @@
+﻿@page "/weather"
+
+@code {
+    private List<Service> Services = new();
+    private System.Timers.Timer? Timer;
+
+    protected override void OnInitialized()
+    {
+        // 初期サービスデータ
+        Services = new List<Service>
+        {
+            new Service { Name = "Web API", IsRunning = true },
+            new Service { Name = "Database", IsRunning = false },
+            new Service { Name = "Cache", IsRunning = true }
+        };
+
+        // タイマーで状態を定期更新
+        Timer = new System.Timers.Timer(5000); // 5秒ごと
+        Timer.Elapsed += (sender, e) => UpdateStatus();
+        Timer.AutoReset = true;
+        Timer.Start();
+    }
+
+    private void UpdateStatus()
+    {
+        // ダミーの状態変化（実際はAPIから取得する）
+        foreach (var service in Services)
+        {
+            service.IsRunning = new Random().Next(0, 2) == 0;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Timer?.Dispose();
+    }
+
+    private class Service
+    {
+        public string Name { get; set; } = "";
+        public bool IsRunning { get; set; }
+    }
+}
+
+<style>
+    body {
+        background-color: #121212;
+        color: #ffffff;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .dashboard {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        width: 250px;
+        text-align: center;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+        transition: transform 0.3s;
+    }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+
+    .status {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin: 10px auto;
+        box-shadow: 0px 0px 10px;
+    }
+
+    .online {
+        background-color: #00ff00;
+        box-shadow: 0px 0px 15px #00ff00;
+    }
+
+    .offline {
+        background-color: #ff0000;
+        box-shadow: 0px 0px 15px #ff0000;
+    }
+</style>
+
+<h1 style="text-align:left; margin-top: 20px; padding-left: 20px;">🔥 サーバーステータス 🔥</h1>
+<div class="dashboard">
+    @foreach (var service in Services)
+    {
+        <div class="card">
+            <h2>@service.Name</h2>
+            <div class="status @(service.IsRunning ? "online" : "offline")"></div>
+        </div>
+    }
+</div>
