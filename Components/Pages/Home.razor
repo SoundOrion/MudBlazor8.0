@@ -1,5 +1,148 @@
 ﻿@page "/"
 
+@using MudBlazor
+
+@code {
+    private List<Service> Services = new();
+    private System.Timers.Timer? Timer;
+    private string SelectedStatus = "All";
+    private string SearchText = "";
+    private readonly List<string> StatusOptions = new() { "All", "Online", "Offline" };
+
+    protected override void OnInitialized()
+    {
+        // 初期サービスデータ
+        Services = new List<Service>
+        {
+            new Service { Name = "Web API", IP = "192.168.1.10", IsRunning = true },
+            new Service { Name = "Database", IP = "192.168.1.20", IsRunning = false },
+            new Service { Name = "Cache", IP = "192.168.1.30", IsRunning = true }
+        };
+
+        // タイマーで状態を定期更新
+        Timer = new System.Timers.Timer(1000); // 1秒ごとに更新
+        Timer.Elapsed += (sender, e) => UpdateStatus();
+        Timer.AutoReset = true;
+        Timer.Start();
+    }
+
+    private void UpdateStatus()
+    {
+        var now = DateTime.Now;
+        foreach (var service in Services)
+        {
+            bool previousState = service.IsRunning;
+            service.IsRunning = new Random().Next(0, 2) == 0;
+
+            if (!service.IsRunning)
+            {
+                if (previousState)
+                {
+                    service.DownSince = now; // ダウンした瞬間の時間を記録
+                }
+            }
+            else
+            {
+                service.DownSince = null; // オンラインになったらリセット
+            }
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Timer?.Dispose();
+    }
+
+    private List<Service> FilteredServices => Services
+        .Where(s => (SelectedStatus == "All" || (SelectedStatus == "Online" && s.IsRunning) || (SelectedStatus == "Offline" && !s.IsRunning)))
+        .Where(s => string.IsNullOrEmpty(SearchText) || s.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || s.IP.Contains(SearchText))
+        .ToList();
+
+    private class Service
+    {
+        public string Name { get; set; } = "";
+        public string IP { get; set; } = "";
+        public bool IsRunning { get; set; }
+        public DateTime? DownSince { get; set; } // 赤ランプ（ダウン状態）の開始時刻
+
+        public string DownDuration => !IsRunning && DownSince != null
+            ? (DateTime.Now - DownSince.Value).ToString(@"hh\:mm\:ss")
+            : "";
+    }
+}
+
+<style>
+    .filter-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+
+        .filter-container .mud-input,
+        .filter-container .mud-select {
+            width: 200px;
+        }
+
+    .status-lamp {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 10px;
+    }
+
+    .online {
+        background-color: #00ff00;
+        box-shadow: 0px 0px 15px #00ff00;
+    }
+
+    .offline {
+        background-color: #ff0000;
+        box-shadow: 0px 0px 15px #ff0000;
+    }
+
+</style>
+
+<h1 style="text-align:center; margin-top: 20px;">🔥 サーバーステータス 🔥</h1>
+
+<div class="filter-container">
+    <MudTextField Class="mud-input" Label="Search" @bind-Value="SearchText" Adornment="Adornment.Start" Variant="Variant.Outlined" />
+    <MudSelect Class="mud-select" @bind-Value="SelectedStatus" Label="Status" Variant="Variant.Outlined">
+        @foreach (var status in StatusOptions)
+        {
+            <MudSelectItem Value="@status">@status</MudSelectItem>
+        }
+    </MudSelect>
+</div>
+
+<MudTable Items="FilteredServices" Hover="true" Dense="true" Sortable="true" FixedHeader="true" Height="500px" Breakpoint="Breakpoint.None">
+    <HeaderContent>
+        <MudTh Style="width: 5%;"></MudTh>
+        <MudTh Style="width: 30%;">Service Name</MudTh>
+        <MudTh Style="width: 30%;">IP Address</MudTh>
+        <MudTh Style="width: 20%;">Status</MudTh>
+        <MudTh Style="width: 15%;">Down Time</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="service">
+        <MudTd>
+            <span class="status-lamp @(service.IsRunning ? "online" : "offline")"></span>
+        </MudTd>
+        <MudTd>@service.Name</MudTd>
+        <MudTd>@service.IP</MudTd>
+        <MudTd>
+            <MudChip T="string" Color="@(service.IsRunning ? Color.Success : Color.Error)">
+                @(service.IsRunning ? "Online" : "Offline")
+            </MudChip>
+        </MudTd>
+        <MudTd>@(service.DownDuration)</MudTd>
+    </RowTemplate>
+</MudTable>
+
+
+
 <PageTitle>Home</PageTitle>
 
 <MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
