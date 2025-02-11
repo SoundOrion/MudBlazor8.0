@@ -2,11 +2,43 @@
 
 <PageTitle>Weather</PageTitle>
 
+@* <SerfHealthStatus /> *@
+@code {
+    private List<SerfHealthStatusModel> statusList = new List<SerfHealthStatusModel>
+    {
+        new SerfHealthStatusModel
+        {
+            NodeName = "SoundOrion-PC",
+            CheckID = "serfHealth",
+            Type = "serf",
+            Notes = "-",
+            Output = "Agent alive and reachable"
+        },
+        new SerfHealthStatusModel
+        {
+            NodeName = "Server-01",
+            CheckID = "serfHealth",
+            Type = "serf",
+            Notes = "Critical warning",
+            Output = "Agent unreachable"
+        },
+        new SerfHealthStatusModel
+        {
+            NodeName = "Node-Alpha",
+            CheckID = "serfHealth",
+            Type = "serf",
+            Notes = "Restarted recently",
+            Output = "Agent alive and reachable"
+        }
+    };
+}
 
-<SerfHealthStatus />
+<h3>System Monitoring</h3>
 
-
-
+@foreach (var status in statusList)
+{
+    <SerfHealthStatus Status="status" />
+}
 
 
 <MudText Typo="Typo.h3" GutterBottom="true">Weather forecast</MudText>
