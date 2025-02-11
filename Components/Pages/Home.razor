@@ -68,7 +68,7 @@
 
         public string DownDuration => !IsRunning && DownSince != null
             ? (DateTime.Now - DownSince.Value).ToString(@"hh\:mm\:ss")
-            : "";
+            : "00:00:00";
     }
 }
 
