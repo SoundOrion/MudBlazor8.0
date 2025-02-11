@@ -6,6 +6,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="BlazorApp2\**" />
+    <Content Remove="BlazorApp2\**" />
+    <EmbeddedResource Remove="BlazorApp2\**" />
+    <None Remove="BlazorApp2\**" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="MudBlazor" Version="8.2.0" />
